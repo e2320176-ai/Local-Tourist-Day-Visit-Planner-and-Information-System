@@ -1,0 +1,2032 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TourLanka - Local Tourist Day-Visit Planner</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        :root {
+            --primary: #0d9488;
+            --primary-dark: #0f766e;
+            --primary-light: #ccfbf1;
+            --accent: #f59e0b;
+            --accent-light: #fef3c7;
+            --earth-1: #92400e;
+            --earth-2: #b45309;
+            --earth-3: #d97706;
+            --dark: #1e293b;
+            --dark-light: #334155;
+            --gray: #64748b;
+            --gray-light: #94a3b8;
+            --light: #f8fafc;
+            --white: #ffffff;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+        }
+
+        [data-theme="dark"] {
+            --dark: #f8fafc;
+            --dark-light: #e2e8f0;
+            --gray: #94a3b8;
+            --gray-light: #64748b;
+            --light: #0f172a;
+            --white: #1e293b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--dark);
+            background: var(--light);
+            transition: background 0.3s, color 0.3s;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--light);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.3s;
+        }
+
+        [data-theme="dark"] .navbar {
+            background: rgba(30, 41, 59, 0.95);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .nav-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 72px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: 1.75rem;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--dark-light);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 2px solid var(--gray-light);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--dark);
+            transition: all 0.3s;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: rotate(180deg);
+        }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .hamburger span {
+            display: block;
+            width: 25px;
+            height: 2px;
+            background: var(--dark);
+            transition: all 0.3s;
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(5px, -5px);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f0fdfa 0%, #fff7ed 50%, #fefce8 100%);
+            padding-top: 72px;
+        }
+
+        [data-theme="dark"] .hero {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        }
+
+        .hero-pattern {
+            position: absolute;
+            inset: 0;
+            opacity: 0.4;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230d9488' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .hero-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-content h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+        }
+
+        .hero-content h1 span {
+            color: var(--primary);
+            position: relative;
+        }
+
+        .hero-content h1 span::after {
+            content: '';
+            position: absolute;
+            bottom: 5px;
+            left: 0;
+            width: 100%;
+            height: 12px;
+            background: var(--primary-light);
+            z-index: -1;
+            border-radius: 4px;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--gray);
+            margin-bottom: 2.5rem;
+            line-height: 1.7;
+            max-width: 540px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.75rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 14px rgba(13, 148, 136, 0.4);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(13, 148, 136, 0.5);
+        }
+
+        .btn-secondary {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+        }
+
+        .btn-secondary:hover {
+            background: var(--earth-3);
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--dark);
+            border: 2px solid var(--gray-light);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .hero-visual {
+            position: relative;
+        }
+
+        .hero-image-container {
+            position: relative;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+            transform: perspective(1000px) rotateY(-5deg) rotateX(2deg);
+            transition: transform 0.5s;
+        }
+
+        .hero-image-container:hover {
+            transform: perspective(1000px) rotateY(0deg) rotateX(0deg);
+        }
+
+        .hero-image {
+            width: 100%;
+            height: 500px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .hero-floating-card {
+            position: absolute;
+            background: white;
+            padding: 1rem 1.25rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        [data-theme="dark"] .hero-floating-card {
+            background: var(--white);
+            color: var(--dark);
+        }
+
+        .hero-floating-card.card-1 {
+            top: 10%;
+            left: -10%;
+            animation-delay: 0s;
+        }
+
+        .hero-floating-card.card-2 {
+            bottom: 15%;
+            right: -5%;
+            animation-delay: 1.5s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .floating-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        /* Section Styles */
+        section {
+            padding: 6rem 0;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 640px;
+            margin: 0 auto 4rem;
+        }
+
+        .section-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .section-desc {
+            color: var(--gray);
+            font-size: 1.1rem;
+            line-height: 1.7;
+        }
+
+        /* Features Section */
+        .features {
+            background: var(--white);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            padding: 2.5rem;
+            border-radius: 20px;
+            background: var(--light);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.4s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            transform: scaleX(0);
+            transition: transform 0.4s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-icon.icon-1 { background: #dbeafe; color: #2563eb; }
+        .feature-icon.icon-2 { background: #dcfce7; color: #16a34a; }
+        .feature-icon.icon-3 { background: #fef3c7; color: #d97706; }
+        .feature-icon.icon-4 { background: #fce7f3; color: #db2777; }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--dark);
+        }
+
+        .feature-card p {
+            color: var(--gray);
+            line-height: 1.7;
+            font-size: 0.95rem;
+        }
+
+        /* Attractions Section */
+        .attractions {
+            background: linear-gradient(to bottom, var(--light), var(--white));
+        }
+
+        .attractions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .attraction-card {
+            background: var(--white);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all 0.4s;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .attraction-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .attraction-image {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+
+        .attraction-card:hover .attraction-image {
+            transform: scale(1.05);
+        }
+
+        .attraction-image-wrapper {
+            overflow: hidden;
+            position: relative;
+        }
+
+        .attraction-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255,255,255,0.95);
+            padding: 0.375rem 0.875rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            backdrop-filter: blur(4px);
+        }
+
+        .attraction-content {
+            padding: 1.75rem;
+        }
+
+        .attraction-content h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .attraction-content p {
+            color: var(--gray);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .attraction-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+            font-size: 0.85rem;
+            color: var(--gray-light);
+        }
+
+        .attraction-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        /* Planner Section */
+        .planner {
+            background: var(--white);
+        }
+
+        .planner-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        .planner-form {
+            background: var(--light);
+            padding: 2.5rem;
+            border-radius: 20px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            background: var(--white);
+            color: var(--dark);
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .checkbox-item:hover {
+            background: rgba(13, 148, 136, 0.05);
+            border-color: var(--primary-light);
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        .checkbox-item label {
+            margin: 0;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .planner-result {
+            background: var(--light);
+            padding: 2.5rem;
+            border-radius: 20px;
+            border: 1px solid rgba(0,0,0,0.05);
+            min-height: 400px;
+        }
+
+        .itinerary-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            min-height: 300px;
+            color: var(--gray-light);
+            text-align: center;
+        }
+
+        .itinerary-empty i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .itinerary-timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .itinerary-timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--primary), var(--accent));
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 1.5rem;
+            padding-left: 1.5rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2rem;
+            top: 0.5rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 3px solid var(--white);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .timeline-time {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .timeline-content {
+            background: var(--white);
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .timeline-content h4 {
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+            color: var(--dark);
+        }
+
+        .timeline-content p {
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+
+        .share-plan-btn {
+            margin-top: 1.5rem;
+            width: 100%;
+        }
+
+        /* Map Section */
+        .map-section {
+            background: var(--light);
+            padding: 0;
+        }
+
+        .map-container {
+            height: 500px;
+            width: 100%;
+            border-radius: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+            z-index: 1;
+        }
+
+        .map-overlay {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 500;
+            background: white;
+            padding: 0.875rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* Testimonials */
+        .testimonials {
+            background: var(--white);
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        .testimonial-card {
+            background: var(--light);
+            padding: 2.5rem;
+            border-radius: 20px;
+            position: relative;
+            transition: all 0.4s;
+        }
+
+        .testimonial-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .testimonial-quote {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            font-size: 3rem;
+            color: var(--primary);
+            opacity: 0.2;
+            line-height: 1;
+        }
+
+        .testimonial-stars {
+            color: var(--accent);
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .testimonial-text {
+            color: var(--gray);
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .testimonial-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--primary-light);
+        }
+
+        .testimonial-info h4 {
+            font-size: 1rem;
+            color: var(--dark);
+        }
+
+        .testimonial-info p {
+            font-size: 0.85rem;
+            color: var(--gray-light);
+        }
+
+        /* Newsletter */
+        .newsletter {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .newsletter-pattern {
+            position: absolute;
+            inset: 0;
+            opacity: 0.1;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .newsletter-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .newsletter h2 {
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .newsletter p {
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .newsletter-form {
+            display: flex;
+            gap: 0.75rem;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .newsletter-form input {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            background: rgba(255,255,255,0.95);
+        }
+
+        .newsletter-form input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+        }
+
+        .newsletter-form button {
+            padding: 1rem 2rem;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .newsletter-form button:hover {
+            background: var(--earth-3);
+            transform: translateY(-2px);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--dark);
+            color: white;
+            padding: 4rem 0 2rem;
+        }
+
+        [data-theme="dark"] .footer {
+            background: #020617;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-brand .logo {
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .footer-brand p {
+            color: rgba(255,255,255,0.7);
+            line-height: 1.7;
+            font-size: 0.9rem;
+        }
+
+        .footer-links h4 {
+            font-size: 1rem;
+            margin-bottom: 1.25rem;
+            color: white;
+        }
+
+        .footer-links ul {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-links a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary-light);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .social-links a {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .social-links a:hover {
+            background: var(--primary);
+            transform: translateY(-3px);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 2rem;
+            text-align: center;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.9rem;
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            position: fixed;
+            top: 72px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--white);
+            z-index: 999;
+            padding: 2rem;
+            transform: translateX(100%);
+            transition: transform 0.3s;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .mobile-menu.active {
+            transform: translateX(0);
+        }
+
+        .mobile-menu a {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--dark);
+            text-decoration: none;
+            padding: 1rem;
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+
+        .mobile-menu a:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--dark);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow-xl);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.4s;
+            z-index: 9999;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: #059669;
+        }
+
+        .toast.error {
+            background: #dc2626;
+        }
+
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .hero-container {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 3rem;
+            }
+
+            .hero-content h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero-subtitle {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .hero-buttons {
+                justify-content: center;
+            }
+
+            .hero-visual {
+                order: -1;
+                max-width: 600px;
+                margin: 0 auto;
+            }
+
+            .planner-container {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hamburger {
+                display: flex;
+            }
+
+            .hero-content h1 {
+                font-size: 2rem;
+            }
+
+            .hero-image {
+                height: 350px;
+            }
+
+            .hero-floating-card {
+                display: none;
+            }
+
+            section {
+                padding: 4rem 0;
+            }
+
+            .section-title {
+                font-size: 1.875rem;
+            }
+
+            .newsletter-form {
+                flex-direction: column;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .checkbox-group {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#" class="logo">
+                <i class="fas fa-compass"></i>
+                TourLanka
+            </a>
+            
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#discover">Discover</a></li>
+                <li><a href="#planner">Plan Trip</a></li>
+                <li><a href="#attractions">Attractions</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="hamburger" id="hamburger" aria-label="Menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="#home" class="mobile-link">Home</a>
+        <a href="#discover" class="mobile-link">Discover</a>
+        <a href="#planner" class="mobile-link">Plan Trip</a>
+        <a href="#attractions" class="mobile-link">Attractions</a>
+        <a href="#contact" class="mobile-link">Contact</a>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-pattern"></div>
+        <div class="hero-container">
+            <div class="hero-content fade-in">
+                <h1>Local Tourist <span>Day-Visit</span> Planner and Information System</h1>
+                <p class="hero-subtitle">A smart web platform that helps tourists discover nearby attractions, plan one-day trips, and explore Gampaha efficiently.</p>
+                <div class="hero-buttons">
+                    <a href="#attractions" class="btn btn-primary">
+                        <i class="fas fa-map-marked-alt"></i>
+                        View Project
+                    </a>
+                    <a href="#planner" class="btn btn-secondary">
+                        <i class="fas fa-play"></i>
+                        Live Demo
+                    </a>
+                    <a href="#" class="btn btn-outline" onclick="showToast('GitHub repository coming soon!', 'info')">
+                        <i class="fab fa-github"></i>
+                        GitHub Repo
+                    </a>
+                </div>
+            </div>
+            <div class="hero-visual fade-in">
+                <div class="hero-image-container">
+                    <img src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&h=600&fit=crop" alt="Travel Planning" class="hero-image">
+                </div>
+                <div class="hero-floating-card card-1">
+                    <div class="floating-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.9rem;">Gampaha</div>
+                        <div style="font-size: 0.8rem; color: var(--gray);">Sri Lanka</div>
+                    </div>
+                </div>
+                <div class="hero-floating-card card-2">
+                    <div class="floating-icon" style="background: var(--accent-light); color: var(--accent);">
+                        <i class="fas fa-route"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.9rem;">15+ Attractions</div>
+                        <div style="font-size: 0.8rem; color: var(--gray);">To Explore</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="discover">
+        <div class="container">
+            <div class="section-header fade-in">
+                <div class="section-tag">
+                    <i class="fas fa-star"></i>
+                    Key Features
+                </div>
+                <h2 class="section-title">Everything You Need for the Perfect Day Trip</h2>
+                <p class="section-desc">Our platform combines smart planning tools with local insights to make your Gampaha adventure unforgettable.</p>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-card fade-in">
+                    <div class="feature-icon icon-1">
+                        <i class="fas fa-search-location"></i>
+                    </div>
+                    <h3>Nearby Attractions Discovery</h3>
+                    <p>Explore hidden gems and popular spots around Gampaha with detailed information, photos, and visitor tips curated for every type of traveler.</p>
+                </div>
+                
+                <div class="feature-card fade-in">
+                    <div class="feature-icon icon-2">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <h3>Custom Day Trip Planner</h3>
+                    <p>Build personalized itineraries based on your interests, available time, and preferred pace. Our smart algorithm optimizes your route for maximum enjoyment.</p>
+                </div>
+                
+                <div class="feature-card fade-in">
+                    <div class="feature-icon icon-3">
+                        <i class="fas fa-map"></i>
+                    </div>
+                    <h3>Interactive Map View</h3>
+                    <p>Navigate Gampaha with our interactive map featuring real-time locations, distances, and directions to all major attractions and local eateries.</p>
+                </div>
+                
+                <div class="feature-card fade-in">
+                    <div class="feature-icon icon-4">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <h3>Local Tips & Insights</h3>
+                    <p>Get insider knowledge from locals and experienced travelers. Discover the best times to visit, local customs, and off-the-beaten-path recommendations.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Attractions Section -->
+    <section class="attractions" id="attractions">
+        <div class="container">
+            <div class="section-header fade-in">
+                <div class="section-tag">
+                    <i class="fas fa-camera"></i>
+                    Top Attractions
+                </div>
+                <h2 class="section-title">Must-Visit Places in Gampaha</h2>
+                <p class="section-desc">Discover the most captivating destinations that showcase the natural beauty and cultural heritage of Gampaha district.</p>
+            </div>
+            
+            <div class="attractions-grid">
+                <div class="attraction-card fade-in">
+                    <div class="attraction-image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=600&h=400&fit=crop" alt="Henarathgoda Botanical Garden" class="attraction-image">
+                        <div class="attraction-badge">
+                            <i class="fas fa-leaf"></i> Nature
+                        </div>
+                    </div>
+                    <div class="attraction-content">
+                        <h3>Henarathgoda Botanical Garden</h3>
+                        <p>Established in 1876, this historic 43-acre garden features Sri Lanka's first rubber tree, diverse flora, orchid houses, and serene boat rides on the lake.</p>
+                        <div class="attraction-meta">
+                            <span><i class="fas fa-map-pin"></i> 1.5 km from center</span>
+                            <span><i class="fas fa-clock"></i> 2-3 hrs</span>
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="showAttractionDetails('Henarathgoda Botanical Garden', 'A historic botanical garden established in 1876, famous for being the site of the first rubber tree planted in Sri Lanka. Features 2,000+ plant species, orchid house, Japanese garden, and swan boat rides. Entry: LKR 200 (locals), LKR 3,540 (foreigners).')">
+                            <i class="fas fa-info-circle"></i> View Details
+                        </button>
+                    </div>
+                </div>
+
+                <div class="attraction-card fade-in">
+                    <div class="attraction-image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1575351881846-974b50c4a9d8?w=600&h=400&fit=crop" alt="Guruge Nature Park" class="attraction-image">
+                        <div class="attraction-badge">
+                            <i class="fas fa-tree"></i> Adventure
+                        </div>
+                    </div>
+                    <div class="attraction-content">
+                        <h3>Guruge Nature Park</h3>
+                        <p>A family-friendly theme park featuring a gem museum, ancient Sri Lankan village replica, Adam's Peak replica, exotic animals, and wave pools for all ages.</p>
+                        <div class="attraction-meta">
+                            <span><i class="fas fa-map-pin"></i> 3.2 km from center</span>
+                            <span><i class="fas fa-clock"></i> 3-4 hrs</span>
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="showAttractionDetails('Guruge Nature Park', 'An entertaining theme park with a gem museum showcasing Sri Lankan gem mining history, replica of an ancient village, Adam\'s Peak replica, exotic animals, and water park attractions. Great for families with children.')">
+                            <i class="fas fa-info-circle"></i> View Details
+                        </button>
+                    </div>
+                </div>
+
+                <div class="attraction-card fade-in">
+                    <div class="attraction-image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1509023464722-18d996393ca8?w=600&h=400&fit=crop" alt="Gampaha Clock Tower" class="attraction-image">
+                        <div class="attraction-badge">
+                            <i class="fas fa-landmark"></i> Heritage
+                        </div>
+                    </div>
+                    <div class="attraction-content">
+                        <h3>Gampaha Clock Tower</h3>
+                        <p>An iconic colonial-era landmark standing at the heart of Gampaha town. A perfect starting point for exploring local markets and experiencing town life.</p>
+                        <div class="attraction-meta">
+                            <span><i class="fas fa-map-pin"></i> 0.5 km from center</span>
+                            <span><i class="fas fa-clock"></i> 30 min</span>
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="showAttractionDetails('Gampaha Clock Tower', 'A historic clock tower located in the center of Gampaha town, representing the colonial heritage of the area. Surrounded by bustling markets and local shops, it serves as a popular meeting point and photo spot for visitors.')">
+                            <i class="fas fa-info-circle"></i> View Details
+                        </button>
+                    </div>
+                </div>
+
+                <div class="attraction-card fade-in">
+                    <div class="attraction-image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&h=400&fit=crop" alt="Diyasaru Park" class="attraction-image">
+                        <div class="attraction-badge">
+                            <i class="fas fa-water"></i> Wetland
+                        </div>
+                    </div>
+                    <div class="attraction-content">
+                        <h3>Diyasaru Park</h3>
+                        <p>A serene wetland park offering lush greenery, walking trails, bird watching opportunities, and a peaceful escape from the bustling town center.</p>
+                        <div class="attraction-meta">
+                            <span><i class="fas fa-map-pin"></i> 2.1 km from center</span>
+                            <span><i class="fas fa-clock"></i> 1-2 hrs</span>
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="showAttractionDetails('Diyasaru Park', 'A beautiful wetland park in Gampaha offering lush green landscapes, walking paths, and rich biodiversity. Ideal for nature lovers, bird watchers, and those seeking a peaceful environment away from urban noise.')">
+                            <i class="fas fa-info-circle"></i> View Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Day Trip Planner -->
+    <section class="planner" id="planner">
+        <div class="container">
+            <div class="section-header fade-in">
+                <div class="section-tag">
+                    <i class="fas fa-magic"></i>
+                    Smart Planner
+                </div>
+                <h2 class="section-title">Plan Your Perfect Day in Gampaha</h2>
+                <p class="section-desc">Tell us your preferences and we'll generate a personalized itinerary just for you.</p>
+            </div>
+
+            <div class="planner-container">
+                <div class="planner-form fade-in">
+                    <form id="plannerForm">
+                        <div class="form-group">
+                            <label for="startTime">Starting Time</label>
+                            <select class="form-control" id="startTime">
+                                <option value="8">8:00 AM</option>
+                                <option value="9" selected>9:00 AM</option>
+                                <option value="10">10:00 AM</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="duration">Trip Duration</label>
+                            <select class="form-control" id="duration">
+                                <option value="4">4 Hours</option>
+                                <option value="6" selected>6 Hours</option>
+                                <option value="8">8 Hours</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Your Interests</label>
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="nature" value="nature" checked>
+                                    <label for="nature">🌿 Nature</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="history" value="history">
+                                    <label for="history">🏛️ History</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="food" value="food" checked>
+                                    <label for="food">🍜 Food</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="shopping" value="shopping">
+                                    <label for="shopping">🛍️ Shopping</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                            <i class="fas fa-wand-magic-sparkles"></i>
+                            Generate My Day Plan
+                        </button>
+                    </form>
+                </div>
+
+                <div class="planner-result fade-in">
+                    <div id="itineraryEmpty" class="itinerary-empty">
+                        <i class="fas fa-map-signs"></i>
+                        <h3>Your Itinerary Awaits</h3>
+                        <p>Fill out the form and click "Generate" to see your personalized day plan.</p>
+                    </div>
+                    <div id="itineraryContent" style="display: none;">
+                        <h3 style="margin-bottom: 1.5rem; color: var(--dark);">
+                            <i class="fas fa-route" style="color: var(--primary);"></i>
+                            Your Gampaha Day Plan
+                        </h3>
+                        <div class="itinerary-timeline" id="itineraryTimeline">
+                            <!-- Generated dynamically -->
+                        </div>
+                        <button class="btn btn-secondary share-plan-btn" onclick="sharePlan()">
+                            <i class="fas fa-share-alt"></i>
+                            Share My Plan
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Map Section -->
+    <section class="map-section" id="mapSection">
+        <div class="map-container">
+            <div id="map"></div>
+            <div class="map-overlay">
+                <i class="fas fa-map-marker-alt" style="color: var(--primary);"></i>
+                <span>Exploring Gampaha, Sri Lanka</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials">
+        <div class="container">
+            <div class="section-header fade-in">
+                <div class="section-tag">
+                    <i class="fas fa-heart"></i>
+                    Testimonials
+                </div>
+                <h2 class="section-title">What Travelers Say</h2>
+                <p class="section-desc">Real experiences from visitors who explored Gampaha with our platform.</p>
+            </div>
+
+            <div class="testimonials-grid">
+                <div class="testimonial-card fade-in">
+                    <div class="testimonial-quote">"</div>
+                    <div class="testimonial-stars">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text">The day planner was incredibly helpful! We visited Henarathgoda Garden in the morning when it was less crowded, and the route suggestions saved us so much time. Highly recommend!</p>
+                    <div class="testimonial-author">
+                        <img src="https://i.pravatar.cc/150?img=32" alt="Sarah M." class="testimonial-avatar">
+                        <div class="testimonial-info">
+                            <h4>Sarah Mitchell</h4>
+                            <p>Travel Blogger, UK</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="testimonial-card fade-in">
+                    <div class="testimonial-quote">"</div>
+                    <div class="testimonial-stars">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star-half-alt"></i>
+                    </div>
+                    <p class="testimonial-text">I discovered Guruge Nature Park through this platform - what a hidden gem! The gem museum was fascinating and my kids loved the water park. Perfect family day out.</p>
+                    <div class="testimonial-author">
+                        <img src="https://i.pravatar.cc/150?img=12" alt="Raj P." class="testimonial-avatar">
+                        <div class="testimonial-info">
+                            <h4>Raj Patel</h4>
+                            <p>Family Traveler, India</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="testimonial-card fade-in">
+                    <div class="testimonial-quote">"</div>
+                    <div class="testimonial-stars">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text">As a solo traveler, the local tips section was invaluable. I found the best kottu roti spot near the clock tower and met some amazing locals. Gampaha exceeded my expectations!</p>
+                    <div class="testimonial-author">
+                        <img src="https://i.pravatar.cc/150?img=59" alt="Emma L." class="testimonial-avatar">
+                        <div class="testimonial-info">
+                            <h4>Emma Lindqvist</h4>
+                            <p>Solo Traveler, Sweden</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter -->
+    <section class="newsletter" id="contact">
+        <div class="newsletter-pattern"></div>
+        <div class="container">
+            <div class="newsletter-content">
+                <h2>Stay Updated</h2>
+                <p>Subscribe to our newsletter for the latest travel tips, new attractions, and exclusive offers in Gampaha.</p>
+                <form class="newsletter-form" id="newsletterForm">
+                    <input type="email" id="newsletterEmail" placeholder="Enter your email address" required>
+                    <button type="submit">
+                        <i class="fas fa-paper-plane"></i>
+                        Subscribe
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="#" class="logo">
+                        <i class="fas fa-compass"></i>
+                        TourLanka
+                    </a>
+                    <p>Your smart companion for exploring Gampaha and beyond. We make day trips simple, memorable, and perfectly planned.</p>
+                    <div class="social-links">
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#discover">Discover</a></li>
+                        <li><a href="#planner">Plan Trip</a></li>
+                        <li><a href="#attractions">Attractions</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-links">
+                    <h4>Attractions</h4>
+                    <ul>
+                        <li><a href="#" onclick="document.getElementById('attractions').scrollIntoView({behavior: 'smooth'})">Botanical Garden</a></li>
+                        <li><a href="#" onclick="document.getElementById('attractions').scrollIntoView({behavior: 'smooth'})">Guruge Park</a></li>
+                        <li><a href="#" onclick="document.getElementById('attractions').scrollIntoView({behavior: 'smooth'})">Clock Tower</a></li>
+                        <li><a href="#" onclick="document.getElementById('attractions').scrollIntoView({behavior: 'smooth'})">Diyasaru Park</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-links">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p> TourLanka - Local Tourist Day-Visit Planner. All rights reserved. Made with <i class="fas fa-heart" style="color: var(--accent);"></i> for Gampaha.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">Message</span>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+        const themeIcon = themeToggle.querySelector('i');
+
+        themeToggle.addEventListener('click', () => {
+            if (html.getAttribute('data-theme') === 'dark') {
+                html.removeAttribute('data-theme');
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.setAttribute('data-theme', 'dark');
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+
+        // Check saved theme
+        if (localStorage.getItem('theme') === 'dark') {
+            html.setAttribute('data-theme', 'dark');
+            themeIcon.classList.remove('fa-moon');
+            themeIcon.classList.add('fa-sun');
+        }
+
+        // Mobile Menu
+        const hamburger = document.getElementById('hamburger');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileLinks = document.querySelectorAll('.mobile-link');
+
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            mobileMenu.classList.toggle('active');
+        });
+
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                hamburger.classList.remove('active');
+                mobileMenu.classList.remove('active');
+            });
+        });
+
+        // Smooth Scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Scroll Animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+        // Toast Notification
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            const icon = toast.querySelector('i');
+
+            toastMessage.textContent = message;
+            toast.className = 'toast show ' + type;
+
+            if (type === 'success') {
+                icon.className = 'fas fa-check-circle';
+            } else if (type === 'error') {
+                icon.className = 'fas fa-exclamation-circle';
+            } else {
+                icon.className = 'fas fa-info-circle';
+            }
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Attraction Details
+        function showAttractionDetails(name, details) {
+            alert(`📍 ${name}\n\n${details}\n\nWould you like to add this to your day plan?`);
+        }
+
+        // Day Trip Planner
+        const plannerForm = document.getElementById('plannerForm');
+        const itineraryEmpty = document.getElementById('itineraryEmpty');
+        const itineraryContent = document.getElementById('itineraryContent');
+        const itineraryTimeline = document.getElementById('itineraryTimeline');
+
+        const attractions = {
+            nature: [
+                { name: 'Henarathgoda Botanical Garden', duration: 120, desc: 'Explore 43 acres of lush gardens, orchid houses, and take a swan boat ride.' },
+                { name: 'Diyasaru Park', duration: 90, desc: 'Wetland walking trails and bird watching in a serene natural setting.' }
+            ],
+            history: [
+                { name: 'Gampaha Clock Tower', duration: 30, desc: 'Historic colonial landmark and town center exploration.' },
+                { name: 'Local Temple Visit', duration: 45, desc: 'Experience spiritual heritage and architecture.' }
+            ],
+            food: [
+                { name: 'Local Market Food Tour', duration: 60, desc: 'Sample authentic Sri Lankan street food and fresh king coconut.' },
+                { name: 'Traditional Rice & Curry Lunch', duration: 75, desc: 'Enjoy a hearty local meal at a recommended eatery.' }
+            ],
+            shopping: [
+                { name: 'Gampaha Town Market', duration: 60, desc: 'Browse local crafts, textiles, and fresh produce.' },
+                { name: 'Gem Museum Shop', duration: 45, desc: 'Learn about Sri Lankan gems and shop for souvenirs.' }
+            ]
+        };
+
+        let currentPlan = '';
+
+        plannerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const startTime = parseInt(document.getElementById('startTime').value);
+            const duration = parseInt(document.getElementById('duration').value);
+            const interests = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+            
+            if (interests.length === 0) {
+                showToast('Please select at least one interest!', 'error');
+                return;
+            }
+
+            generateItinerary(startTime, duration, interests);
+        });
+
+        function generateItinerary(startTime, duration, interests) {
+            itineraryEmpty.style.display = 'none';
+            itineraryContent.style.display = 'block';
+            itineraryTimeline.innerHTML = '';
+
+            let currentTime = startTime * 60; // Convert to minutes
+            const endTime = currentTime + (duration * 60);
+            let timelineHTML = '';
+            let planText = `🗺️ My Gampaha Day Plan\n📅 ${new Date().toLocaleDateString()}\n⏱️ ${duration} Hours\n\n`;
+
+            // Add starting point
+            const startTimeStr = formatTime(currentTime);
+            timelineHTML += createTimelineItem(startTimeStr, 'Start from Gampaha Town Center', 'Begin your adventure! Grab a quick breakfast or king coconut to fuel up.', 'fas fa-flag-checkered');
+            planText += `${startTimeStr} - Start from Gampaha Town Center\n`;
+
+            // Mix attractions based on interests
+            let selectedAttractions = [];
+            interests.forEach(interest => {
+                if (attractions[interest]) {
+                    selectedAttractions = selectedAttractions.concat(attractions[interest]);
+                }
+            });
+
+            // Shuffle and select based on available time
+            selectedAttractions.sort(() => Math.random() - 0.5);
+            
+            let attractionCount = 0;
+            for (let attr of selectedAttractions) {
+                if (currentTime + attr.duration + 30 > endTime) break; // +30 for travel time
+                
+                currentTime += 30; // Travel time
+                const timeStr = formatTime(currentTime);
+                
+                timelineHTML += createTimelineItem(timeStr, attr.name, attr.desc, 'fas fa-map-marker-alt');
+                planText += `${timeStr} - ${attr.name}\n`;
+                
+                currentTime += attr.duration;
+                attractionCount++;
+            }
+
+            // Add buffer time and end
+            currentTime += 30;
+            if (currentTime < endTime) {
+                const bufferStr = formatTime(currentTime);
+                timelineHTML += createTimelineItem(bufferStr, 'Flexible Time / Shopping', 'Free time for spontaneous discoveries or souvenir shopping.', 'fas fa-shopping-bag');
+                planText += `${bufferStr} - Flexible Time / Shopping\n`;
+            }
+
+            const endTimeStr = formatTime(endTime);
+            timelineHTML += createTimelineItem(endTimeStr, 'End of Day Trip', 'Return to your accommodation or enjoy dinner in town. Great day!', 'fas fa-home');
+            planText += `${endTimeStr} - End of Day Trip\n`;
+
+            itineraryTimeline.innerHTML = timelineHTML;
+            currentPlan = planText;
+
+            // Animate timeline items
+            document.querySelectorAll('.timeline-item').forEach((item, index) => {
+                item.style.opacity = '0';
+                item.style.transform = 'translateX(-20px)';
+                setTimeout(() => {
+                    item.style.transition = 'all 0.4s';
+                    item.style.opacity = '1';
+                    item.style.transform = 'translateX(0)';
+                }, index * 150);
+            });
+
+            showToast('Your personalized itinerary is ready!', 'success');
+        }
+
+        function createTimelineItem(time, title, desc, icon) {
+            return `
+                <div class="timeline-item">
+                    <div class="timeline-time"><i class="${icon}"></i> ${time}</div>
+                    <div class="timeline-content">
+                        <h4>${title}</h4>
+                        <p>${desc}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatTime(minutes) {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours > 12 ? hours - 12 : hours;
+            return `${displayHours}:${mins.toString().padStart(2, '0')} ${ampm}`;
+        }
+
+        // Share Plan
+        function sharePlan() {
+            if (!currentPlan) return;
+            
+            navigator.clipboard.writeText(currentPlan).then(() => {
+                showToast('Plan copied to clipboard! Share with your travel buddies.', 'success');
+            }).catch(() => {
+                showToast('Failed to copy. Please try again.', 'error');
+            });
+        }
+
+        // Newsletter
+        const newsletterForm = document.getElementById('newsletterForm');
+        newsletterForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('newsletterEmail').value;
+            
+            if (!email || !email.includes('@')) {
+                showToast('Please enter a valid email address.', 'error');
+                return;
+            }
+
+            showToast('Welcome aboard! Check your inbox for travel tips.', 'success');
+            newsletterForm.reset();
+        });
+
+        // Leaflet Map
+        function initMap() {
+            const map = L.map('map').setView([7.0891, 79.9925], 13);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Custom marker icon
+            const customIcon = L.divIcon({
+                className: 'custom-marker',
+                html: '<div style="background: #0d9488; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;"><i class="fas fa-map-marker-alt" style="color: white; font-size: 14px;"></i></div>',
+                iconSize: [30, 30],
+                iconAnchor: [15, 30]
+            });
+
+            // Add markers for attractions
+            const locations = [
+                { lat: 7.0950, lng: 79.9950, title: 'Henarathgoda Botanical Garden', type: 'nature' },
+                { lat: 7.0750, lng: 79.9850, title: 'Guruge Nature Park', type: 'adventure' },
+                { lat: 7.0891, lng: 79.9925, title: 'Gampaha Clock Tower', type: 'heritage' },
+                { lat: 7.0850, lng: 79.9980, title: 'Diyasaru Park', type: 'nature' }
+            ];
+
+            locations.forEach(loc => {
+                const marker = L.marker([loc.lat, loc.lng], { icon: customIcon }).addTo(map);
+                marker.bindPopup(`
+                    <div style="font-family: Inter, sans-serif; padding: 5px;">
+                        <h4 style="margin: 0 0 5px 0; color: #0d9488;">${loc.title}</h4>
+                        <p style="margin: 0; font-size: 0.85rem; color: #64748b;">${loc.type.charAt(0).toUpperCase() + loc.type.slice(1)} Attraction</p>
+                    </div>
+                `);
+            });
+
+            // Add circle to show Gampaha area
+            L.circle([7.0891, 79.9925], {
+                color: '#0d9488',
+                fillColor: '#0d9488',
+                fillOpacity: 0.1,
+                radius: 3000
+            }).addTo(map);
+        }
+
+        // Initialize map when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+        });
+
+        // Navbar scroll effect
+        let lastScroll = 0;
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('.navbar');
+            const currentScroll = window.pageYOffset;
+            
+            if (currentScroll > 100) {
+                navbar.style.boxShadow = '0 4px 20px rgba(0,0,0,0.08)';
+            } else {
+                navbar.style.boxShadow = 'none';
+            }
+            
+            lastScroll = currentScroll;
+        });
+    </script>
+</body>
+</html>
